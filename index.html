@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Offline Apps 100% + SW App</title>
+
+    <!-- SERVICE WORKER REGISTRATION (To save HTML offline) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((reg) => console.log('Service Worker successfully activated!', reg.scope))
+                    .catch((err) => console.log('Service Worker Error:', err));
+            });
+        }
+    </script>
+</head>
+<body>
+
+    <main style="max-width: 600px; margin: 40px auto; text-align: center;">
+        <h1>100% Offline Application Testing</h1>
+        <p>Now the HTML + js and css page survives without the internet, and for images we have the method.</p>
+        <button id="buton-actiune">Launch Confetti offline</button>
+    </main>
+
+    <!-- LOCAL STORAGE WIDGET (To save CSS/JS offline) -->
+    <script>
+        const setupURLs = {
+            'app.css': 'https://cdn.jsdelivr.net/npm/water.css@2/out/water.min.css',
+            'app.js': 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js'
+        };
+
+        async function loadAndInjectFiles() {
+            for (const [numeKey, url] of Object.entries(setupURLs)) {
+                let codValue = localStorage.getItem(numeKey);
+
+                if (!codValue) {
+                    try {
+                        const response = await fetch(url);
+                        codValue = await response.text();
+                        localStorage.setItem(numeKey, codValue);
+                    } catch (error) {
+                        console.warn('We are offline! No cache for: ' + numeKey);
+                        continue; 
+                    }
+                }
+
+                if (numeKey.endsWith('.css')) {
+                    const styleElement = document.createElement('style');
+                    styleElement.textContent = codValue;
+                    document.head.appendChild(styleElement);
+                } else if (numeKey.endsWith('.js')) {
+                    const scriptElement = document.createElement('script');
+                    scriptElement.textContent = codValue;
+                    document.body.appendChild(scriptElement);
+                }
+            }
+            initApp();
+        }
+
+        function initApp() {
+            const btn = document.getElementById('buton-actiune');
+            btn.addEventListener('click', () => {
+                if (typeof confetti === 'function') {
+                    confetti();
+                } else {
+                    alert('JS is not available.');
+                }
+            });
+        }
+
+        loadAndInjectFiles();
+    </script>
+</body>
+</html>
